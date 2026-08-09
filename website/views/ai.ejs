@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA - Générateur de PV - Police Municipale de Paris</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">🛡️ Police Municipale RH</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ai">IA PV</a>
+            <a href="/stats">Stats</a>
+            <a href="/auth/logout">Déconnexion</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>🤖 Générateur de Documents IA</h1>
+        <p class="description">Générez automatiquement des procès-verbaux, constats et rapports</p>
+
+        <div class="ai-form">
+            <div class="form-group">
+                <label>Type de document</label>
+                <select id="docType">
+                    <option value="interpellation">Procès-verbal d'intervement</option>
+                    <option value="constat">Constat de contravention</option>
+                    <option value="rapport">Rapport d'activité</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input type="text" id="nom" placeholder="Nom de la personne">
+                </div>
+                <div class="form-group">
+                    <label>Prénom</label>
+                    <input type="text" id="prenom" placeholder="Prénom de la personne">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="date">
+                </div>
+                <div class="form-group">
+                    <label>Lieu</label>
+                    <input type="text" id="lieu" placeholder="Adresse ou lieu de l'incident">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Infractions constatées</label>
+                <textarea id="infractions" placeholder="Décrivez les infractions constatées..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Témoins</label>
+                <input type="text" id="temoins" placeholder="Noms et prénoms des témoins">
+            </div>
+
+            <div class="form-group">
+                <label>Détails complémentaires</label>
+                <textarea id="details" placeholder="Circonstances, observations..."></textarea>
+            </div>
+
+            <button class="btn-generate" onclick="generateDocument()">
+                🤖 Générer le document
+            </button>
+        </div>
+
+        <div class="result-container" id="result" style="display: none;">
+            <h2>📄 Document généré</h2>
+            <div class="result-content" id="resultContent"></div>
+            <button class="btn-copy" onclick="copyResult()">📋 Copier</button>
+        </div>
+    </div>
+
+    <script>
+        async function generateDocument() {
+            const data = {
+                type: document.getElementById('docType').value,
+                nom: document.getElementById('nom').value,
+                prenom: document.getElementById('prenom').value,
+                date: document.getElementById('date').value,
+                lieu: document.getElementById('lieu').value,
+                infractions: document.getElementById('infractions').value,
+                temoins: document.getElementById('temoins').value,
+                details: document.getElementById('details').value
+            };
+
+            const response = await fetch('/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('resultContent').textContent = result.content;
+            } else {
+                alert('Erreur: ' + result.error);
+            }
+        }
+
+        function copyResult() {
+            const content = document.getElementById('resultContent').textContent;
+            navigator.clipboard.writeText(content);
+            alert('Document copié!');
+        }
+    </script>
+</body>
+</html>

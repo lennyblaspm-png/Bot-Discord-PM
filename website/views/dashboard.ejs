@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Police Municipale de Paris</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">🛡️ Police Municipale RH</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/ai">IA PV</a>
+            <a href="/stats">Stats</a>
+            <a href="/auth/logout">Déconnexion</a>
+        </div>
+        <div class="nav-user">
+            <img src="<%= user.avatar ? 'https://cdn.discordapp.com/avatars/' + user.id + '/' + user.avatar + '.png' : 'https://cdn.discordapp.com/embed/avatars/0.png' %>" alt="Avatar">
+            <span><%= user.username %></span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Tableau de bord</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🎫</div>
+                <div class="stat-info">
+                    <h3>Tickets ouverts</h3>
+                    <p class="stat-value">-</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👤</div>
+                <div class="stat-info">
+                    <h3>Agents en service</h3>
+                    <p class="stat-value">-</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-info">
+                    <h3>Dispatch aujourd'hui</h3>
+                    <p class="stat-value">-</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-info">
+                    <h3>Absences en cours</h3>
+                    <p class="stat-value">-</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <h2>Actions rapides</h2>
+            <div class="action-grid">
+                <a href="/ai" class="action-card">
+                    <span class="action-icon">🤖</span>
+                    <span>Générer un PV</span>
+                </a>
+                <a href="/stats" class="action-card">
+                    <span class="action-icon">📊</span>
+                    <span>Voir les stats</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
