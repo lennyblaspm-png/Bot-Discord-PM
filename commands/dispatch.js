@@ -6,7 +6,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
 const EmbedUtils = require('../utils/embedBuilder');
 const { responses } = require('../utils/dispatchTracker');
-const { setDispatchAdmin } = require('../utils/scheduler');
 const Logger = require('../utils/logger');
 
 module.exports = {
@@ -33,9 +32,6 @@ module.exports = {
                 ephemeral: true
             });
         }
-
-        // Enregistrer l'admin pour le résumé MP
-        setDispatchAdmin(interaction.user.id);
 
         const now = new Date();
         const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });

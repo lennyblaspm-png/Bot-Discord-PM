@@ -54,4 +54,13 @@ function setAndSave(messageId, data) {
     saveResponse(messageId, data);
 }
 
-module.exports = { responses: dispatchResponses, saveResponse, loadResponses, setAndSave };
+function clearTodayDispatches() {
+    try {
+        const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+        run('DELETE FROM dispatch_responses WHERE dispatch_date = ?', [today]);
+    } catch (e) {
+        console.error('[DispatchTracker] Erreur nettoyage:', e);
+    }
+}
+
+module.exports = { responses: dispatchResponses, saveResponse, loadResponses, setAndSave, clearTodayDispatches };

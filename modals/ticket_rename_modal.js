@@ -25,8 +25,14 @@ module.exports = {
             });
         }
 
-        // Nettoyer le nom
-        const cleanName = newName.toLowerCase().replace(/[^a-z0-9-]/g, '-').substring(0, 32);
+        // Nettoyer le nom (autorisé : lettres, chiffres, tirets et emojis)
+        const cleanName = Array.from(
+            newName
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9\p{Extended_Pictographic}\p{Emoji_Modifier}\uFE0F\u200D-]/gu, '-')
+        ).slice(0, 32).join('');
 
         try {
             await channel.setName(cleanName);

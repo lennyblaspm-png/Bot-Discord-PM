@@ -42,8 +42,12 @@ module.exports = {
             });
         }
 
-        // Renommer le salon
-        const cleanName = newName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        // Renommer le salon (autorisé : lettres, chiffres, tirets et emojis)
+        const cleanName = newName
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9\p{Extended_Pictographic}\p{Emoji_Modifier}\uFE0F\u200D-]/gu, '-');
         
         try {
             await channel.setName(cleanName);
