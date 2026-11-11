@@ -82,6 +82,15 @@ class AttendanceModel {
         );
     }
 
+    static resetActive(guildId) {
+        return run(
+            `UPDATE service_attendance
+             SET clock_out = ?, duration = 0, status = ?, on_pause = 0, pause_start = NULL
+             WHERE guild_id = ? AND status = ?`,
+            [nowUTC(), 'inactive', guildId, 'active']
+        );
+    }
+
     static getActiveByService(guildId, serviceName) {
         return all(
             'SELECT * FROM service_attendance WHERE guild_id = ? AND service_name = ? AND status = ? ORDER BY clock_in DESC',

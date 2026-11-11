@@ -6,19 +6,19 @@ module.exports = {
     async execute(interaction, client) {
         const modal = new ModalBuilder()
             .setCustomId('absence_modal')
-            .setTitle('Nouvelle demande d\'absence');
+            .setTitle('Déclarer une absence');
 
         const startInput = new TextInputBuilder()
             .setCustomId('absence_start')
             .setLabel('Début (JJ/MM/AAAA HH:MM)')
-            .setPlaceholder('Ex: 15/12/2024 09:00')
+            .setPlaceholder('Ex: 15/12/2026 09:00')
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 
         const endInput = new TextInputBuilder()
             .setCustomId('absence_end')
             .setLabel('Fin (JJ/MM/AAAA HH:MM)')
-            .setPlaceholder('Ex: 20/12/2024 18:00')
+            .setPlaceholder('Ex: 20/12/2026 18:00')
             .setStyle(TextInputStyle.Short)
             .setRequired(true);
 

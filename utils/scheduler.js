@@ -2,8 +2,13 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { responses, loadResponses, setAndSave, clearTodayDispatches } = require('./dispatchTracker');
 const EmbedUtils = require('./embedBuilder');
 const Logger = require('./logger');
+const AttendanceModel = require('../models/Attendance');
+const AbsenceModel = require('../models/Absence');
+const ConfigModel = require('../models/Config');
 
 let client = null;
+const attendanceRemindersInProgress = new Set();
+const absenceExpiryInProgress = new Set();
 
 // Tracking séparé pour chaque tâche
 let dispatchSentDate = null;
@@ -48,11 +53,112 @@ function checkScheduledTasks() {
     if (reminderSentDate && reminderSentDate !== today) reminderSentDate = null;
     if (summarySentDate && summarySentDate !== today) summarySentDate = null;
 
+    checkAttendanceReminders();
+    expireAbsences();
+
     // Dispatch à 8h00
     if (hours === 8 && minutes === 0 && dispatchSentDate !== today) {
         dispatchSentDate = today;
         Logger.info('[Scheduler] Déclenchement dispatch 8h');
         sendDispatch();
+    }
+
+    async function checkAttendanceReminders() {
+        if (!client) return;
+
+        for (const guild of client.guilds.cache.values()) {
+            if (attendanceRemindersInProgress.has(guild.id)) continue;
+
+            const lastSentValue = ConfigModel.get(guild.id, 'attendance_reminder_last_sent');
+            if (!lastSentValue) {
+                ConfigModel.set(guild.id, 'attendance_reminder_last_sent', new Date().toISOString());
+                continue;
+            }
+
+            const lastSent = Date.parse(lastSentValue);
+            if (!Number.isFinite(lastSent) || Date.now() - lastSent < 2 * 60 * 60 * 1000) continue;
+
+            const active = AttendanceModel.getActive(guild.id);
+            if (active.length === 0) continue;
+
+            const channelId = ConfigModel.get(guild.id, 'attendance_channel_id');
+            if (!channelId) {
+                Logger.warn(`[Pointeuse] Aucun salon configuré pour le rappel dans ${guild.name}; réutilisez /service dans le salon souhaité.`);
+                continue;
+            }
+
+            attendanceRemindersInProgress.add(guild.id);
+            try {
+                const channel = await client.channels.fetch(channelId);
+                if (!channel || !channel.isTextBased()) {
+                    Logger.error(`[Pointeuse] Salon de rappel ${channelId} introuvable ou non textuel dans ${guild.name}`);
+                    continue;
+                }
+
+                const members = [...new Set(active.map(entry => entry.user_id))];
+                const description = members
+                    .map(userId => {
+                        const sessions = active.filter(entry => entry.user_id === userId);
+                        const status = sessions.some(entry => entry.on_pause) ? ' ⏸️ En pause' : ' 🟢 En service';
+                        return `• <@${userId}>${status}`;
+                    })
+                    .join('\n');
+
+                await channel.send({
+                    content: members.map(userId => `<@${userId}>`).join(' '),
+                    embeds: [EmbedUtils.create(guild.id, {
+                        title: '⏰ Rappel de la pointeuse',
+                        description: `Vous êtes toujours enregistré(s) en service :\n\n${description}\n\nPensez à terminer votre service si vous avez fini.`,
+                        color: '#FF8C00'
+                    })],
+                    allowedMentions: { users: members }
+                });
+                ConfigModel.set(guild.id, 'attendance_reminder_last_sent', new Date().toISOString());
+                Logger.info(`[Pointeuse] Rappel envoyé à ${members.length} agent(s) dans ${guild.name}`);
+            } catch (error) {
+                Logger.error(`[Pointeuse] Erreur lors du rappel dans ${guild.name}`, error);
+            } finally {
+                attendanceRemindersInProgress.delete(guild.id);
+            }
+        }
+    }
+
+    async function expireAbsences() {
+        if (!client) return;
+
+        for (const absence of AbsenceModel.getExpired()) {
+            const absenceKey = String(absence.id);
+            if (absenceExpiryInProgress.has(absenceKey)) continue;
+            absenceExpiryInProgress.add(absenceKey);
+
+            try {
+                const guild = client.guilds.cache.get(absence.guild_id);
+                if (!guild) {
+                    Logger.warn(`[Absence] Serveur ${absence.guild_id} introuvable pour l'absence #${absence.id}`);
+                    continue;
+                }
+
+                if (!AbsenceModel.hasLaterAbsence(absence.guild_id, absence.user_id, absence.id)) {
+                    const member = await guild.members.fetch(absence.user_id).catch(error => {
+                        if (error.code === 10007) return null;
+                        throw error;
+                    });
+                    if (member) {
+                        const role = await guild.roles.fetch('1489721280302284961');
+                        if (role && member.roles.cache.has(role.id)) {
+                            await member.roles.remove(role, 'Fin de la période d’absence');
+                        }
+                    }
+                }
+
+                AbsenceModel.markExpired(absence.id);
+                Logger.info(`[Absence] Absence #${absence.id} expirée; rôle absent retiré si nécessaire`);
+            } catch (error) {
+                Logger.error(`[Absence] Erreur lors de l'expiration de l'absence #${absence.id}`, error);
+            } finally {
+                absenceExpiryInProgress.delete(absenceKey);
+            }
+        }
     }
 
     // Rappel à 18h00

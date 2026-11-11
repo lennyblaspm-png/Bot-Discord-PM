@@ -68,15 +68,12 @@ class ServiceModel {
      * Initialise les services par défaut
      */
     static initDefaults(guildId) {
-        const existing = this.getAll(guildId);
-        if (existing.length > 0) return;
-
         const defaults = [
             { name: 'Directeur', emoji: '👔', color: '#FF0000', description: 'Direction Générale', category_id: '1501231009910358179', role_id: '1489721109350715773', sort_order: 1 },
             { name: 'Directeur Adjoint', emoji: '🎯', color: '#FF4500', description: 'Direction Adjointe', category_id: '1501231344192327722', role_id: '1489721112802758857', sort_order: 2 },
             { name: 'Chef de Police', emoji: '👮', color: '#FFD700', description: 'Commandement Police', category_id: '1501170914195148930', role_id: '1489721115873120266', sort_order: 3 },
-            { name: 'Chef de Service de Première Classe', emoji: '⭐', color: '#00FF00', description: 'Service 1ère Classe', category_id: '1501231389528555651', role_id: '1489721121409339574', sort_order: 4 },
-            { name: 'Chef de Service de Seconde Classe', emoji: '🌟', color: '#32CD32', description: 'Service 2ème Classe', category_id: '1501231479232004096', role_id: '1489721125209374884', sort_order: 5 },
+            { name: 'Chef de Service de Première Classe', emoji: '⭐', color: '#00FF00', description: 'Service 1ère Classe', category_id: '1570062288864415896', role_id: '1489721128397308015;1489721130980872482', sort_order: 4 },
+            { name: 'Chef de Service de Seconde Classe', emoji: '🌟', color: '#32CD32', description: 'Service 2ème Classe', category_id: '1570062288864415896', role_id: '1489721128397308015;1489721130980872482', sort_order: 5 },
             { name: 'BMU', emoji: '🚨', color: '#0000FF', description: 'Brigade Motorisée Urbaine', category_id: '1501231507304612164', role_id: '1533080263142408252', sort_order: 6 },
             { name: 'GSI', emoji: '🔍', color: '#8A2BE2', description: 'Groupe de Soutien et d\'Intervention', category_id: '1501231537067393146', role_id: '1489721206943912116', sort_order: 7 },
             { name: 'Brigade VTT', emoji: '🏍️', color: '#FF69B4', description: 'Brigade VTT', category_id: '1530981106621616388', role_id: '822122011442413590', sort_order: 8 },
@@ -86,7 +83,24 @@ class ServiceModel {
             { name: 'Démission', emoji: '📋', color: '#808080', description: 'Demandes de Démission', category_id: '1501231678373494784', role_id: '1489721119312445512', sort_order: 12 }
         ];
 
-        defaults.forEach(service => this.create({ ...service, guild_id: guildId }));
+        if (this.getAll(guildId).length === 0) {
+            defaults.forEach(service => this.create({ ...service, guild_id: guildId }));
+            return;
+        }
+
+        const chefServices = defaults.filter(service => service.name.startsWith('Chef de Service de '));
+        for (const service of chefServices) {
+            const existing = this.getByName(guildId, service.name);
+            if (!existing) {
+                this.create({ ...service, guild_id: guildId });
+                continue;
+            }
+
+            this.update(guildId, service.name, {
+                category_id: service.category_id,
+                role_id: service.role_id
+            });
+        }
     }
 
     /**

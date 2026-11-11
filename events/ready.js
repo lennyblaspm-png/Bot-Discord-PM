@@ -9,6 +9,7 @@ const { initDatabase } = require('../config/database');
 const ServiceModel = require('../models/Service');
 const ConfigModel = require('../models/Config');
 const StaffModel = require('../models/Staff');
+const AttendanceModel = require('../models/Attendance');
 const Logger = require('../utils/logger');
 
 module.exports = {
@@ -30,6 +31,11 @@ module.exports = {
         client.guilds.cache.forEach(guild => {
             ConfigModel.initDefaults(guild.id);
             ServiceModel.initDefaults(guild.id);
+            if (ConfigModel.get(guild.id, 'attendance_initial_reset_completed') !== '1') {
+                const reset = AttendanceModel.resetActive(guild.id);
+                ConfigModel.set(guild.id, 'attendance_initial_reset_completed', '1');
+                Logger.info(`[Pointeuse] ${reset.changes} service(s) actif(s) remis à zéro dans ${guild.name}`);
+            }
             Logger.info(`Configuration initialisée pour ${guild.name}`);
         });
 

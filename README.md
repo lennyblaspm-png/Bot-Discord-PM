@@ -45,6 +45,7 @@ GUILD_ID=votre_guild_id
 |----------|-------------|
 | `/rhconfig` | Configuration du système |
 | `/rhdeploy` | Déployer le panneau de ticket |
+| `/rc` | Déployer le panneau recrutement / direction |
 | `/stats` | Statistiques du serveur |
 | `/dashboard` | Tableau de bord RH |
 | `/search` | Rechercher des tickets |
@@ -56,6 +57,8 @@ GUILD_ID=votre_guild_id
 | `/priority` | Changer la priorité |
 | `/add` | Ajouter un membre |
 | `/remove` | Retirer un membre |
+
+Le panneau `/rc` est déployé dans le salon configuré par le bot. Les absences déclarées attribuent automatiquement le rôle absent et le retirent à leur date de fin. La pointeuse envoie un rappel toutes les deux heures dans le salon où `/service` a été utilisé.
 
 ## Services
 

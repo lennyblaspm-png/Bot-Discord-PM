@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const AttendanceModel = require('../models/Attendance');
+const ConfigModel = require('../models/Config');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -37,5 +38,11 @@ module.exports = {
         );
 
         await interaction.reply({ embeds: [embed], components: [row] });
+        const panelMessage = await interaction.fetchReply();
+        ConfigModel.set(guildId, 'attendance_channel_id', interaction.channelId);
+        ConfigModel.set(guildId, 'attendance_message_id', panelMessage.id);
+        if (!ConfigModel.get(guildId, 'attendance_reminder_last_sent')) {
+            ConfigModel.set(guildId, 'attendance_reminder_last_sent', new Date().toISOString());
+        }
     }
 };

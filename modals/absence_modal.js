@@ -1,8 +1,9 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const AbsenceModel = require('../models/Absence');
 const Logger = require('../utils/logger');
+const { parseFrenchDateTime } = require('../utils/absenceDates');
 
-const ABSENCE_CHANNEL_ID = '1533189810230005941';
+const ABSENCE_ROLE_ID = '1489721280302284961';
 
 module.exports = {
     customId: 'absence_modal',
@@ -13,72 +14,58 @@ module.exports = {
         const startDate = interaction.fields.getTextInputValue('absence_start');
         const endDate = interaction.fields.getTextInputValue('absence_end');
         const reason = interaction.fields.getTextInputValue('absence_reason');
+        const startDateISO = parseFrenchDateTime(startDate);
+        const endDateISO = parseFrenchDateTime(endDate);
 
+        if (!startDateISO || !endDateISO || new Date(endDateISO) <= new Date(startDateISO)) {
+            return interaction.reply({
+                content: '❌ Dates invalides. Utilisez JJ/MM/AAAA HH:MM et indiquez une fin après le début.',
+                ephemeral: true
+            });
+        }
+
+        const role = await interaction.guild.roles.fetch(ABSENCE_ROLE_ID);
+        const botMember = interaction.guild.members.me;
+        if (!role || !botMember || !botMember.permissions.has('ManageRoles') || botMember.roles.highest.comparePositionTo(role) <= 0) {
+            Logger.error(`[Absence] Impossible d'attribuer le rôle ${ABSENCE_ROLE_ID} dans ${interaction.guild.name}`);
+            return interaction.reply({
+                content: '❌ Le rôle absent est introuvable ou je ne peux pas le gérer. Vérifiez mes permissions et la hiérarchie des rôles.',
+                ephemeral: true
+            });
+        }
+
+        const member = await interaction.guild.members.fetch(userId);
         const result = AbsenceModel.create({
             guild_id: guildId,
             user_id: userId,
-            start_date: startDate,
-            end_date: endDate,
-            reason: reason
+            start_date: startDateISO,
+            end_date: endDateISO,
+            reason
         });
 
+        try {
+            await member.roles.add(role, 'Déclaration automatique d’absence');
+        } catch (error) {
+            AbsenceModel.deleteById(result.lastInsertRowid);
+            throw error;
+        }
+
         const embed = new EmbedBuilder()
-            .setTitle('📋 ・Demande d\'absence envoyée')
+            .setTitle('📋 ・Absence déclarée')
             .setDescription(
-                `> *Votre demande a été transmise aux administrateurs*\n\n` +
+                `> *Votre absence est enregistrée et le rôle ${role} vous a été attribué.*\n\n` +
                 `**━━━━━━━━━━━━━━━━━━━━━━━━━━━**\n\n` +
                 `> 📅 **Début** ・ \`${startDate}\`\n` +
                 `> 📅 **Fin** ・ \`${endDate}\`\n` +
                 `> 📝 **Motif** ・ ${reason}\n` +
                 `> 👤 **Agent** ・ <@${userId}>\n\n` +
-                `**━━━━━━━━━━━━━━━━━━━━━━━━━━━**\n\n` +
-                `> *En attente de validation par un administrateur*`
+                `**━━━━━━━━━━━━━━━━━━━━━━━━━━━**`
             )
-            .setColor('#FFA500')
+            .setColor('#2ECC71')
             .setTimestamp();
 
         await interaction.reply({ embeds: [embed], ephemeral: true });
 
-        // Notify admins in the specific absence channel
-        try {
-            const notifEmbed = new EmbedBuilder()
-                .setTitle('📩 ・Nouvelle demande d\'absence')
-                .setDescription(
-                    `> *Demande de <@${userId}>*\n\n` +
-                    `**━━━━━━━━━━━━━━━━━━━━━━━━━━━**\n\n` +
-                    `> 📅 **Début** ・ \`${startDate}\`\n` +
-                    `> 📅 **Fin** ・ \`${endDate}\`\n` +
-                    `> 📝 **Motif** ・ ${reason}\n\n` +
-                    `**━━━━━━━━━━━━━━━━━━━━━━━━━━━**`
-                )
-                .setColor('#FFA500')
-                .setTimestamp();
-
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`absence_approve_${result.lastInsertRowid}`)
-                    .setLabel('Accepter')
-                    .setStyle(ButtonStyle.Success)
-                    .setEmoji('✅'),
-                new ButtonBuilder()
-                    .setCustomId(`absence_reject_${result.lastInsertRowid}`)
-                    .setLabel('Refuser')
-                    .setStyle(ButtonStyle.Danger)
-                    .setEmoji('❌')
-            );
-
-            const absenceChannel = await client.channels.fetch(ABSENCE_CHANNEL_ID);
-            if (absenceChannel) {
-                const msg = await absenceChannel.send({ embeds: [notifEmbed], components: [row] });
-                AbsenceModel.updateMessageId(result.lastInsertRowid, msg.id);
-                Logger.info(`[Absence] Notification envoyée dans #${absenceChannel.name}`);
-            } else {
-                Logger.error(`[Absence] Salon ${ABSENCE_CHANNEL_ID} introuvable`);
-            }
-        } catch (error) {
-            Logger.error('Erreur notification absence', error);
-        }
-
-        Logger.info(`Demande d'absence de ${interaction.user.tag}: ${startDate} au ${endDate}`);
+        Logger.info(`Absence déclarée par ${interaction.user.tag}: ${startDate} au ${endDate}`);
     }
 };
