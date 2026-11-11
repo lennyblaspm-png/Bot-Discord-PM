@@ -45,6 +45,7 @@ GUILD_ID=votre_guild_id
 |----------|-------------|
 | `/rhconfig` | Configuration du système |
 | `/rhdeploy` | Déployer le panneau de ticket |
+| `/panelall` | Déployer ou actualiser le grand panel de tickets |
 | `/rc` | Déployer le panneau recrutement / direction |
 | `/stats` | Statistiques du serveur |
 | `/dashboard` | Tableau de bord RH |
@@ -58,7 +59,7 @@ GUILD_ID=votre_guild_id
 | `/add` | Ajouter un membre |
 | `/remove` | Retirer un membre |
 
-Le panneau `/rc` est déployé dans le salon configuré par le bot. Les absences déclarées utilisent des dates au format JJ/MM/AAAA, attribuent automatiquement le rôle absent et le retirent après la date de fin (incluse). La pointeuse envoie un rappel toutes les deux heures dans le salon où `/service` a été utilisé ; les pointages actifs sont conservés au redémarrage.
+Le grand panneau de tickets est automatiquement publié ou mis à jour au démarrage dans le salon `1489721713766695022`. La commande `/panelall` permet aussi de le déployer ou de l’actualiser à la demande ; `/rhdeploy` permet de choisir manuellement un autre salon. Le panneau `/rc` reste déployé par sa commande dédiée. Les absences déclarées utilisent des dates au format JJ/MM/AAAA, attribuent automatiquement le rôle absent et le retirent après la date de fin (incluse). La pointeuse envoie un rappel toutes les deux heures dans le salon où `/service` a été utilisé ; les pointages actifs sont conservés au redémarrage.
 
 ## Services
 

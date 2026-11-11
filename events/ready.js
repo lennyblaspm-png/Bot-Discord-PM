@@ -5,11 +5,13 @@
 
 const { Events, ActivityType } = require('discord.js');
 const config = require('../config/config');
-const { initDatabase } = require('../config/database');
 const ServiceModel = require('../models/Service');
 const ConfigModel = require('../models/Config');
 const StaffModel = require('../models/Staff');
 const Logger = require('../utils/logger');
+const { deployTicketPanel } = require('../utils/ticketPanel');
+
+const TICKET_PANEL_CHANNEL_ID = '1489721713766695022';
 
 module.exports = {
     name: Events.ClientReady,
@@ -19,9 +21,6 @@ module.exports = {
         Logger.info(`Bot connecté en tant que ${client.user.tag}`);
         Logger.info(`Serveurs: ${client.guilds.cache.size}`);
         Logger.info(`Utilisateurs: ${client.users.cache.size}`);
-
-        // Initialiser la base de données
-        initDatabase();
 
         // Définir le statut
         client.user.setActivity('Police Municipale RH', { type: ActivityType.Watching });
@@ -41,6 +40,18 @@ module.exports = {
                 }
             });
         });
+
+        try {
+            const channel = await client.channels.fetch(TICKET_PANEL_CHANNEL_ID);
+            if (!channel || !channel.isTextBased() || !channel.guild) {
+                throw new Error(`Salon de panel ticket ${TICKET_PANEL_CHANNEL_ID} introuvable ou non textuel`);
+            }
+
+            const result = await deployTicketPanel(channel.guild, channel);
+            Logger.info(`[Tickets] Grand panel ${result.updated ? 'mis à jour' : 'publié'} dans #${channel.name}`);
+        } catch (error) {
+            Logger.error('[Tickets] Échec du déploiement automatique du grand panel', error);
+        }
 
         Logger.info('Bot prêt à fonctionner !');
     }

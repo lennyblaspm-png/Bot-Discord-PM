@@ -52,13 +52,11 @@ client.buttonHandler = new ButtonHandler(client);
 client.selectMenuHandler = new SelectMenuHandler(client);
 client.modalHandler = new ModalHandler(client);
 
-// Initialiser la base de données
-initDatabase();
-
 // Démarrer le bot
 async function startBot() {
     try {
         Logger.info('Démarrage du bot PoliceMunicipale-RH...');
+        await initDatabase();
 
         // Charger les événements
         const eventHandler = new EventHandler(client);
