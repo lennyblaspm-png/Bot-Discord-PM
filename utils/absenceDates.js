@@ -1,28 +1,31 @@
-function parseFrenchDateTime(value) {
-    const match = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(value.trim());
+function parseFrenchDate(value, endOfDay = false) {
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
     if (!match) return null;
 
-    const [, dayText, monthText, yearText, hourText, minuteText] = match;
-    const expected = {
+    const [, dayText, monthText, yearText] = match;
+    const date = {
         day: Number(dayText),
         month: Number(monthText),
-        year: Number(yearText),
-        hour: Number(hourText),
-        minute: Number(minuteText)
+        year: Number(yearText)
     };
 
-    if (expected.hour > 23 || expected.minute > 59) return null;
-
-    const calendarDate = new Date(Date.UTC(expected.year, expected.month - 1, expected.day));
+    const calendarDate = new Date(Date.UTC(date.year, date.month - 1, date.day));
     if (
-        calendarDate.getUTCFullYear() !== expected.year ||
-        calendarDate.getUTCMonth() !== expected.month - 1 ||
-        calendarDate.getUTCDate() !== expected.day
+        calendarDate.getUTCFullYear() !== date.year ||
+        calendarDate.getUTCMonth() !== date.month - 1 ||
+        calendarDate.getUTCDate() !== date.day
     ) {
         return null;
     }
 
-    const targetAsUTC = Date.UTC(expected.year, expected.month - 1, expected.day, expected.hour, expected.minute);
+    if (endOfDay) {
+        calendarDate.setUTCDate(calendarDate.getUTCDate() + 1);
+        date.year = calendarDate.getUTCFullYear();
+        date.month = calendarDate.getUTCMonth() + 1;
+        date.day = calendarDate.getUTCDate();
+    }
+
+    const targetAsUTC = Date.UTC(date.year, date.month - 1, date.day);
     let timestamp = targetAsUTC;
     const formatter = new Intl.DateTimeFormat('en-GB', {
         timeZone: 'Europe/Paris',
@@ -52,11 +55,11 @@ function parseFrenchDateTime(value) {
             .map(part => [part.type, Number(part.value)])
     );
     if (
-        finalParts.year !== expected.year ||
-        finalParts.month !== expected.month ||
-        finalParts.day !== expected.day ||
-        finalParts.hour !== expected.hour ||
-        finalParts.minute !== expected.minute
+        finalParts.year !== date.year ||
+        finalParts.month !== date.month ||
+        finalParts.day !== date.day ||
+        finalParts.hour !== 0 ||
+        finalParts.minute !== 0
     ) {
         return null;
     }
@@ -64,4 +67,4 @@ function parseFrenchDateTime(value) {
     return new Date(timestamp).toISOString();
 }
 
-module.exports = { parseFrenchDateTime };
+module.exports = { parseFrenchDate };

@@ -5,6 +5,7 @@ const Logger = require('./logger');
 const AttendanceModel = require('../models/Attendance');
 const AbsenceModel = require('../models/Absence');
 const ConfigModel = require('../models/Config');
+const config = require('../config/config');
 
 let client = null;
 const attendanceRemindersInProgress = new Set();
@@ -144,15 +145,31 @@ function checkScheduledTasks() {
                         throw error;
                     });
                     if (member) {
-                        const role = await guild.roles.fetch('1489721280302284961');
+                        const role = await guild.roles.fetch(config.absenceRoleId);
                         if (role && member.roles.cache.has(role.id)) {
                             await member.roles.remove(role, 'Fin de la période d’absence');
                         }
                     }
                 }
 
+                if (absence.message_id) {
+                    const channel = await guild.channels.fetch(config.absenceChannelId);
+                    if (!channel?.isTextBased()) {
+                        Logger.error(`[Absence] Salon ${config.absenceChannelId} introuvable pour supprimer le message de l'absence #${absence.id}`);
+                        continue;
+                    }
+
+                    try {
+                        const message = await channel.messages.fetch(absence.message_id);
+                        await message.delete();
+                    } catch (error) {
+                        if (error.code !== 10008) throw error;
+                        Logger.warn(`[Absence] Le message ${absence.message_id} de l'absence #${absence.id} était déjà supprimé`);
+                    }
+                }
+
                 AbsenceModel.markExpired(absence.id);
-                Logger.info(`[Absence] Absence #${absence.id} expirée; rôle absent retiré si nécessaire`);
+                Logger.info(`[Absence] Absence #${absence.id} expirée; rôle retiré si nécessaire et message supprimé`);
             } catch (error) {
                 Logger.error(`[Absence] Erreur lors de l'expiration de l'absence #${absence.id}`, error);
             } finally {

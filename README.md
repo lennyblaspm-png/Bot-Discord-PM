@@ -58,7 +58,7 @@ GUILD_ID=votre_guild_id
 | `/add` | Ajouter un membre |
 | `/remove` | Retirer un membre |
 
-Le panneau `/rc` est déployé dans le salon configuré par le bot. Les absences déclarées attribuent automatiquement le rôle absent et le retirent à leur date de fin. La pointeuse envoie un rappel toutes les deux heures dans le salon où `/service` a été utilisé.
+Le panneau `/rc` est déployé dans le salon configuré par le bot. Les absences déclarées utilisent des dates au format JJ/MM/AAAA, attribuent automatiquement le rôle absent et le retirent après la date de fin (incluse). La pointeuse envoie un rappel toutes les deux heures dans le salon où `/service` a été utilisé ; les pointages actifs sont conservés au redémarrage.
 
 ## Services
 

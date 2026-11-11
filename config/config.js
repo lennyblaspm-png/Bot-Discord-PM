@@ -17,6 +17,8 @@ const config = {
     ticketLogChannel: process.env.TICKET_LOG_CHANNEL || 'ticket-logs',
     ticketTranscriptChannel: process.env.TICKET_TRANSCRIPT_CHANNEL || 'ticket-transcripts',
     ticketCategory: process.env.TICKET_CATEGORY || 'Tickets',
+    absenceChannelId: '1570072449138299104',
+    absenceRoleId: '1489721280302284961',
 
     // Temps
     reminderInterval: parseInt(process.env.REMINDER_INTERVAL) || 24,

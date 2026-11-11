@@ -8,7 +8,7 @@
 
 const { Client, GatewayIntentBits, Collection, Partials } = require('discord.js');
 const config = require('./config/config');
-const { initDatabase } = require('./config/database');
+const { initDatabase, saveDatabase } = require('./config/database');
 const CommandHandler = require('./handlers/commandHandler');
 const EventHandler = require('./handlers/eventHandler');
 const ButtonHandler = require('./handlers/buttonHandler');
@@ -105,12 +105,14 @@ process.on('uncaughtExceptionMonitor', (error, origin) => {
 // Arrêt propre
 process.on('SIGINT', () => {
     Logger.info('Arrêt du bot...');
+    saveDatabase();
     client.destroy();
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
     Logger.info('Arrêt du bot...');
+    saveDatabase();
     client.destroy();
     process.exit(0);
 });
