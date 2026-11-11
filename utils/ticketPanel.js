@@ -11,6 +11,7 @@ const EmbedUtils = require('./embedBuilder');
 const { run, get } = require('../config/database');
 
 function buildTicketPanel(guildId) {
+    ServiceModel.initDefaults(guildId);
     const services = ServiceModel.getAll(guildId);
     if (services.length === 0) {
         throw new Error(`Aucun service configuré pour le serveur ${guildId}`);
