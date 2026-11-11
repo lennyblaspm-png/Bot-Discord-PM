@@ -54,12 +54,13 @@ function buildTicketPanel(guildId) {
     return { embeds: [EmbedUtils.deploy(guildId)], components: [row1, row2] };
 }
 
-async function deployTicketPanel(guild, channel) {
+async function deployTicketPanel(guild, channel, options = {}) {
     const botMember = guild.members.me;
     const botPermissions = channel.permissionsFor(botMember);
     if (
         !botPermissions ||
         !botPermissions.has(PermissionFlagsBits.ViewChannel) ||
+        !botPermissions.has(PermissionFlagsBits.ReadMessageHistory) ||
         !botPermissions.has(PermissionFlagsBits.SendMessages) ||
         !botPermissions.has(PermissionFlagsBits.EmbedLinks)
     ) {
@@ -70,14 +71,22 @@ async function deployTicketPanel(guild, channel) {
     const payload = buildTicketPanel(guild.id);
     const existing = get('SELECT * FROM dashboard WHERE guild_id = ?', [guild.id]);
 
+    let existingMessage = null;
     if (existing?.channel_id === channel.id && existing.message_id) {
         try {
-            const existingMessage = await channel.messages.fetch(existing.message_id);
+            existingMessage = await channel.messages.fetch(existing.message_id);
+        } catch (error) {
+            if (error.code !== 10008) throw error;
+        }
+
+        if (existingMessage && options.republish && !botPermissions.has(PermissionFlagsBits.ManageMessages)) {
+            throw new Error(`Permission ManageMessages requise pour remplacer le panel dans le salon ${channel.id}`);
+        }
+
+        if (existingMessage && !options.republish) {
             await existingMessage.edit(payload);
             run('UPDATE dashboard SET last_update = datetime("now") WHERE guild_id = ?', [guild.id]);
             return { message: existingMessage, updated: true };
-        } catch (error) {
-            if (error.code !== 10008) throw error;
         }
     }
 
@@ -88,7 +97,15 @@ async function deployTicketPanel(guild, channel) {
         run('INSERT INTO dashboard (guild_id, channel_id, message_id) VALUES (?, ?, ?)', [guild.id, channel.id, message.id]);
     }
 
-    return { message, updated: false };
+    if (existingMessage && options.republish) {
+        try {
+            await existingMessage.delete();
+        } catch (error) {
+            if (error.code !== 10008) throw error;
+        }
+    }
+
+    return { message, updated: false, replaced: Boolean(existingMessage && options.republish) };
 }
 
 module.exports = { buildTicketPanel, deployTicketPanel };

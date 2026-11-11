@@ -31,10 +31,10 @@ module.exports = {
                 });
             }
 
-            const result = await deployTicketPanel(guild, channel);
-            Logger.info(`Grand panel ${result.updated ? 'actualisé' : 'déployé'} via /panelall par ${interaction.user.tag}`);
+            const result = await deployTicketPanel(guild, channel, { republish: true });
+            Logger.info(`Grand panel ${result.replaced ? 'remplacé' : 'déployé'} via /panelall par ${interaction.user.tag}`);
             await interaction.editReply({
-                content: `✅ Grand panel ${result.updated ? 'actualisé' : 'déployé'} dans ${channel}.`
+                content: `✅ Grand panel publié en bas de ${channel}${result.replaced ? ' ; l’ancien message a été supprimé' : ''}.`
             });
         } catch (error) {
             Logger.error('Erreur lors de l’exécution de /panelall', error);
